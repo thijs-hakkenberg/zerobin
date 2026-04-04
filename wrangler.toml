@@ -1,0 +1,10 @@
+name = "zerobin"
+compatibility_date = "2024-12-01"
+
+[[kv_namespaces]]
+binding = "PASTES"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID"
+
+[vars]
+MAX_PASTE_SIZE = "10485760"  # 10MB

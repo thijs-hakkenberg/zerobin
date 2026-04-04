@@ -1,0 +1,17 @@
+{
+  "name": "zerobin",
+  "version": "1.0.0",
+  "description": "Zero-knowledge encrypted pastebin on Cloudflare",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev public --binding PASTES=zerobin-pastes",
+    "deploy": "wrangler pages deploy public",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0",
+    "vitest": "^2.0.0",
+    "@cloudflare/workers-types": "^4.0.0"
+  }
+}

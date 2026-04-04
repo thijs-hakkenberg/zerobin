@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeroBin - Zero Knowledge Encrypted Paste</title>
+  <meta name="description" content="A zero-knowledge encrypted pastebin. The server has zero knowledge of pasted data.">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-theme">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1><span class="lock-icon">&#x1f512;</span> ZeroBin</h1>
+      <span class="tagline">Zero-knowledge encrypted paste</span>
+    </div>
+    <div class="header-right">
+      <button id="btn-new" class="btn btn-primary" title="New paste">+ New</button>
+      <button id="btn-clone" class="btn btn-secondary hidden" title="Clone this paste">Clone</button>
+      <button id="btn-raw" class="btn btn-secondary hidden" title="View raw content">Raw</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Create paste mode -->
+    <section id="create-section">
+      <div class="toolbar">
+        <div class="toolbar-row">
+          <div class="field">
+            <label for="format">Format</label>
+            <select id="format">
+              <option value="plaintext">Plain Text</option>
+              <option value="markdown">Markdown</option>
+              <optgroup label="Source Code">
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="csharp">C#</option>
+                <option value="cpp">C++</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="ruby">Ruby</option>
+                <option value="php">PHP</option>
+                <option value="swift">Swift</option>
+                <option value="kotlin">Kotlin</option>
+                <option value="sql">SQL</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="shell">Shell / Bash</option>
+                <option value="yaml">YAML</option>
+                <option value="json">JSON</option>
+                <option value="xml">XML</option>
+                <option value="dockerfile">Dockerfile</option>
+                <option value="terraform">Terraform / HCL</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="expiry">Expires</label>
+            <select id="expiry">
+              <option value="5min">5 minutes</option>
+              <option value="10min">10 minutes</option>
+              <option value="1hour">1 hour</option>
+              <option value="1day">1 day</option>
+              <option value="1week" selected>1 week</option>
+              <option value="1month">1 month</option>
+              <option value="3months">3 months</option>
+              <option value="1year">1 year</option>
+              <option value="never">Never</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="toolbar-row">
+          <label class="checkbox-field">
+            <input type="checkbox" id="burnafterreading">
+            <span>Burn after reading</span>
+          </label>
+
+          <label class="checkbox-field">
+            <input type="checkbox" id="opendiscussion">
+            <span>Open discussion</span>
+          </label>
+
+          <div class="field">
+            <label for="password">Password <span class="optional">(optional)</span></label>
+            <input type="password" id="password" placeholder="Extra encryption password">
+          </div>
+        </div>
+
+        <div class="toolbar-row">
+          <div class="field file-field">
+            <label for="attachment">Attach file <span class="optional">(max 10MB)</span></label>
+            <input type="file" id="attachment">
+            <button id="clear-attachment" class="btn btn-small hidden">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <textarea id="paste-input" placeholder="Paste your content here..." autofocus></textarea>
+
+      <div class="actions">
+        <button id="btn-create" class="btn btn-primary btn-large">Encrypt &amp; Create Paste</button>
+      </div>
+    </section>
+
+    <!-- View paste mode -->
+    <section id="view-section" class="hidden">
+      <div class="paste-meta" id="paste-meta">
+        <span id="meta-created"></span>
+        <span id="meta-expires"></span>
+        <span id="meta-burn" class="badge badge-danger hidden">Burns after reading</span>
+      </div>
+
+      <div class="paste-actions">
+        <button id="btn-copy-link" class="btn btn-small" title="Copy paste URL">Copy Link</button>
+        <button id="btn-copy-content" class="btn btn-small" title="Copy decrypted content">Copy Content</button>
+        <button id="btn-qr" class="btn btn-small" title="QR code">QR Code</button>
+      </div>
+
+      <!-- Password prompt (shown if needed) -->
+      <div id="password-prompt" class="hidden">
+        <div class="password-box">
+          <p>This paste is password-protected. Enter the password to decrypt:</p>
+          <input type="password" id="decrypt-password" placeholder="Password">
+          <button id="btn-decrypt" class="btn btn-primary">Decrypt</button>
+        </div>
+      </div>
+
+      <!-- Decrypted content -->
+      <div id="paste-content" class="hidden">
+        <div id="content-display"></div>
+      </div>
+
+      <!-- File attachment -->
+      <div id="attachment-display" class="hidden">
+        <div class="attachment-bar">
+          <span class="attachment-icon">&#x1F4CE;</span>
+          <span id="attachment-name"></span>
+          <span id="attachment-size"></span>
+          <button id="btn-download-attachment" class="btn btn-small">Download</button>
+        </div>
+      </div>
+
+      <!-- Discussion -->
+      <div id="discussion-section" class="hidden">
+        <h3>Discussion</h3>
+        <div id="comments-list"></div>
+        <div class="comment-form">
+          <input type="text" id="comment-nickname" placeholder="Nickname (optional)">
+          <textarea id="comment-input" placeholder="Add a comment..." rows="3"></textarea>
+          <button id="btn-comment" class="btn btn-primary">Post Comment</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- QR modal -->
+    <div id="qr-modal" class="modal hidden">
+      <div class="modal-content">
+        <button id="qr-close" class="modal-close">&times;</button>
+        <h3>Scan to open paste</h3>
+        <canvas id="qr-canvas"></canvas>
+        <p class="qr-note">The decryption key is included in the URL</p>
+      </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading" class="hidden">
+      <div class="spinner"></div>
+      <p id="loading-text">Encrypting...</p>
+    </div>
+
+    <!-- Error display -->
+    <div id="error-bar" class="hidden">
+      <span id="error-text"></span>
+      <button id="error-close">&times;</button>
+    </div>
+  </main>
+
+  <footer>
+    <p>
+      ZeroBin &mdash; zero-knowledge encrypted pastebin.
+      Content is encrypted in your browser. The server has <strong>zero knowledge</strong> of your data.
+    </p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="/js/crypto.js"></script>
+  <script src="/js/qrcode.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
