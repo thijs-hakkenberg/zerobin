@@ -219,13 +219,13 @@
     try {
       const response = await fetch(`/api/paste/${pasteId}`);
       if (!response.ok) {
+        hideLoading();
         if (response.status === 404) {
-          hideLoading();
-          showError('Paste not found or has expired.');
-          newPaste();
-          return;
+          showPasteError('Paste not found or has expired.');
+        } else {
+          showPasteError(`Server error: ${response.status}`);
         }
-        throw new Error(`Server error: ${response.status}`);
+        return;
       }
 
       currentPaste = await response.json();
@@ -250,9 +250,29 @@
       tryDecrypt('');
     } catch (err) {
       hideLoading();
-      showError(`Failed to load paste: ${err.message}`);
-      newPaste();
+      showPasteError(`Failed to load paste: ${err.message}`);
     }
+  }
+
+  function showPasteError(message) {
+    // Show error in the view section instead of redirecting to root
+    hide(els.createSection);
+    show(els.viewSection);
+    hide(els.passwordPrompt);
+    hide(els.attachmentDisplay);
+    hide(els.discussionSection);
+    hide(els.metaBurn);
+    hide(els.btnClone);
+    hide(els.btnRaw);
+    els.metaCreated.textContent = '';
+    els.metaExpires.textContent = '';
+    show(els.pasteContent);
+    els.contentDisplay.innerHTML = `<div class="paste-error">
+      <div class="paste-error-icon">&#x26A0;</div>
+      <h2>${escapeHtml(message)}</h2>
+      <p>The paste may have expired, been burned after reading, or the link is invalid.</p>
+      <button class="btn btn-primary" onclick="window.location='/'">Create New Paste</button>
+    </div>`;
   }
 
   async function tryDecrypt(password) {
