@@ -196,14 +196,36 @@
       const result = await response.json();
 
       // Navigate to the paste URL
-      const url = `${window.location.origin}/?${result.id}#${key}`;
       window.history.pushState({}, '', `/?${result.id}#${key}`);
 
       // Store delete token in sessionStorage
       sessionStorage.setItem(`delete_${result.id}`, result.deletetoken);
 
+      // Display locally instead of re-fetching from the API.
+      // Re-fetching would consume burn-after-reading pastes immediately.
+      currentPaste = {
+        ...encrypted,
+        meta: {
+          created: Date.now(),
+          ...encrypted.meta,
+        },
+        comments: [],
+      };
+      currentKey = key;
+      decryptedData = payload;
+
       hideLoading();
-      loadPaste(result.id, key);
+      showViewMode();
+      displayDecryptedContent();
+
+      // Show metadata
+      els.metaCreated.textContent = `Created: ${formatDate(new Date())}`;
+      els.metaExpires.textContent = encrypted.meta.expire === 'never'
+        ? 'Expires: Never'
+        : `Expires: ${encrypted.meta.expire}`;
+      if (encrypted.meta.burnafterreading) {
+        show(els.metaBurn);
+      }
     } catch (err) {
       hideLoading();
       showError(`Failed to create paste: ${err.message}`);
@@ -271,8 +293,10 @@
       <div class="paste-error-icon">&#x26A0;</div>
       <h2>${escapeHtml(message)}</h2>
       <p>The paste may have expired, been burned after reading, or the link is invalid.</p>
-      <button class="btn btn-primary" onclick="window.location='/'">Create New Paste</button>
+      <button class="btn btn-primary" id="btn-error-new">Create New Paste</button>
     </div>`;
+    const btnErrorNew = document.getElementById('btn-error-new');
+    if (btnErrorNew) btnErrorNew.addEventListener('click', () => { window.location = '/'; });
   }
 
   async function tryDecrypt(password) {
