@@ -700,6 +700,16 @@ footer strong {
   color: var(--text-secondary);
 }
 
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
 /* Responsive */
 
 @media (max-width: 640px) {
